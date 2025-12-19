@@ -1,26 +1,19 @@
+
 {
-  "name": "chainforge2.0",
+  "name": "blockchain",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@nomicfoundation/hardhat-ignition": "^3.0.6",
-    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
-    "@types/node": "^22.19.3",
+    "@nomicfoundation/hardhat-ignition": "^3.0.3",
+    "@nomicfoundation/hardhat-toolbox-viem": "^5.0.0",
+    "@types/node": "^22.18.6",
+    "dotenv": "^17.2.2",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
-    "hardhat": "^3.1.0",
+    "hardhat": "^3.0.6",
     "typescript": "~5.8.0",
-    "viem": "^2.43.2"
+    "viem": "^2.37.6"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0",
-    "dotenv": "^17.2.3"
+    "@openzeppelin/contracts": "^5.4.0"
   }
 }
