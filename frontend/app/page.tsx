@@ -16,9 +16,16 @@ export default function Home() {
       {/*<ConnectButton />*/}
 
       <FileUploader
-        onFileProcessed={() => setFileReady(true)}
+        onFileProcessed={(file, hash, metadataUri) => {
+          console.log("Ready to mint:", {
+          file,
+          hash,
+          metadataUri,
+        });
+        setFileReady(true);
+        }}
       />
-
+      
       <HammerAnimation active={forging} />
 
       <button
