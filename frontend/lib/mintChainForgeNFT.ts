@@ -4,6 +4,7 @@ import { sepolia } from "viem/chains";
 export async function mintChainForgeNFT({
   contract,
   metadataUri,
+  fileHash,
 }: {
   contract: {
     address: `0x${string}`;
@@ -13,18 +14,18 @@ export async function mintChainForgeNFT({
     account: `0x${string}`;
   };
   metadataUri: string;
+  fileHash: `0x${string}`;
 }) {
-  // 1. Send transaction (starts hammer)
   const hash = await writeContract(contract.walletClient, {
     address: contract.address,
     abi: contract.abi,
-    functionName: "mint",
-    args: [metadataUri],
+    functionName: "mintAsset", // ✅ correct
+    args: [metadataUri, fileHash], // ✅ both args
     account: contract.account,
-    chain: sepolia, // ✅ REQUIRED
+    chain: sepolia,
+    gas: BigInt(1_000_000),
   });
 
-  // 2. Wait for confirmation (stop hammer)
   const receipt = await waitForTransactionReceipt(
     contract.publicClient,
     { hash }

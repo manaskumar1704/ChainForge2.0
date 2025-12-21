@@ -5,13 +5,10 @@ import { useState } from "react";
 export function FileUploader({
   onFileProcessed,
 }: {
-  onFileProcessed: (file: File, hash: string, metadataUri: string) => void;
+  onFileProcessed: (hash: string, metadataUri: string) => void;
 }) {
-  const [fileName, setFileName] = useState<string | null>(null);
   const [hash, setHash] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [metadataUri, setMetadataUri] = useState<string | null>(null);
 
   async function handleFileChange(
     e: React.ChangeEvent<HTMLInputElement>
@@ -20,44 +17,32 @@ export function FileUploader({
     if (!file) return;
 
     setLoading(true);
-    setFileName(file.name);
 
-    // 1. Read file
+    // 1️⃣ Compute SHA-256 in browser
     const buffer = await file.arrayBuffer();
-
-    // 2. Hash file (SHA-256)
     const digest = await crypto.subtle.digest("SHA-256", buffer);
-    const hashArray = Array.from(new Uint8Array(digest));
-    const hashHex = hashArray
+    const hashHex = Array.from(new Uint8Array(digest))
       .map((b) => b.toString(16).padStart(2, "0"))
       .join("");
 
     setHash(hashHex);
-    setLoading(false);
 
-    // 3. Upload to IPFS via API route
-    setUploading(true);
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("hash", hashHex);
-
+    // 2️⃣ Send ONLY hash to backend
     const res = await fetch("/api/ipfs", {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hash: hashHex }),
     });
 
     const data = await res.json();
 
-    setUploading(false);
-    setMetadataUri(data.metadataUri);
+    setLoading(false);
 
-    // 4. Notify parent
-    onFileProcessed(file, hashHex, data.metadataUri);
+    onFileProcessed(hashHex, data.metadataUri);
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <div className="flex flex-col items-center gap-4">
       <label className="cursor-pointer px-4 py-2 border rounded-lg">
         Upload File
         <input
@@ -67,35 +52,13 @@ export function FileUploader({
         />
       </label>
 
-      {loading && (
-        <p className="text-sm text-gray-500">Hashing file…</p>
-      )}
-
-      {uploading && (
-        <p className="text-sm text-orange-500">
-          Uploading to IPFS…
-        </p>
-      )}
-
-      {fileName && (
-        <p className="text-sm">
-          <strong>File:</strong> {fileName}
-        </p>
-      )}
+      {loading && <p className="text-sm text-gray-500">Forging hash…</p>}
 
       {hash && (
-        <div className="text-xs break-all bg-gray-900 text-green-400 p-2 rounded w-full max-w-md">
+        <div className="text-xs break-all bg-gray-900 text-green-400 p-2 rounded max-w-md">
           <strong>SHA-256:</strong>
           <br />
           {hash}
-        </div>
-      )}
-
-      {metadataUri && (
-        <div className="text-xs break-all bg-gray-800 text-blue-400 p-2 rounded w-full max-w-md">
-          <strong>Metadata URI:</strong>
-          <br />
-          {metadataUri}
         </div>
       )}
     </div>

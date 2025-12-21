@@ -1,12 +1,25 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 
 export function ConnectWallet() {
+  const [mounted, setMounted] = useState(false);
+
   const { isConnected, address } = useAccount();
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
+
+  // ✅ This runs only on the client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // ⛔ Prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   if (isConnected) {
     return (

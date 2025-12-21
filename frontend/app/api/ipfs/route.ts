@@ -9,51 +9,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    const hash = formData.get("hash") as string | null;
+    const { hash } = await req.json();
 
-    if (!file || !hash) {
+    if (!hash) {
       return NextResponse.json(
-        { error: "Missing file or hash" },
+        { error: "Missing file hash" },
         { status: 400 }
       );
     }
 
-    /* ------------------ Upload file to IPFS ------------------ */
-    const fileData = new FormData();
-    fileData.append("file", file);
-
-    const fileUpload = await fetch(
-      "https://api.pinata.cloud/pinning/pinFileToIPFS",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.PINATA_JWT}`,
-        },
-        body: fileData,
-      }
-    );
-
-    if (!fileUpload.ok) {
-      const err = await fileUpload.text();
-      return NextResponse.json(
-        { error: "File upload to Pinata failed", details: err },
-        { status: 500 }
-      );
-    }
-
-    const fileJson = await fileUpload.json();
-
-    /* ------------------ Create metadata ------------------ */
+    // 🔒 Hash-only metadata (ChainForge core idea)
     const metadata = {
-      name: file.name,
-      description: "Forged via ChainForge 2.0",
+      name: "ChainForge Proof",
+      description: "Cryptographic proof forged via ChainForge 2.0",
       fileHash: hash,
-      image: `ipfs://${fileJson.IpfsHash}`,
+      hashAlgorithm: "SHA-256",
+      timestamp: Math.floor(Date.now() / 1000),
     };
 
-    /* ------------------ Upload metadata ------------------ */
     const metaUpload = await fetch(
       "https://api.pinata.cloud/pinning/pinJSONToIPFS",
       {
@@ -69,25 +42,21 @@ export async function POST(req: Request) {
     if (!metaUpload.ok) {
       const err = await metaUpload.text();
       return NextResponse.json(
-        { error: "Metadata upload to Pinata failed", details: err },
+        { error: "Metadata upload failed", details: err },
         { status: 500 }
       );
     }
 
     const metaJson = await metaUpload.json();
-    console.log("File stored at:", `ipfs://${fileJson.IpfsHash}`);
-    console.log("Metadata stored at:", `ipfs://${metaJson.IpfsHash}`);
 
+    console.log("ChainForge metadata IPFS:", `ipfs://${metaJson.IpfsHash}`);
 
-    /* ------------------ Success response ------------------ */
     return NextResponse.json({
-      fileIpfs: fileJson.IpfsHash,
-      metadataIpfs: metaJson.IpfsHash,
       metadataUri: `ipfs://${metaJson.IpfsHash}`,
     });
   } catch {
     return NextResponse.json(
-      { error: "Unexpected IPFS upload error" },
+      { error: "IPFS metadata generation failed" },
       { status: 500 }
     );
   }

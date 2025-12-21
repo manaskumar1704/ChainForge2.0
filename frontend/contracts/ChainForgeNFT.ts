@@ -1,16 +1,19 @@
 export const ChainForgeNFTAbi = [
   {
     type: "function",
-    name: "mint",
+    name: "mintAsset",
     stateMutability: "nonpayable",
-    inputs: [{ name: "tokenURI", type: "string" }],
+    inputs: [
+      { name: "tokenURI", type: "string" },
+      { name: "fileHash", type: "bytes32" },
+    ],
     outputs: [],
   },
   {
     type: "function",
-    name: "totalSupply",
+    name: "verifyAsset",
     stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "uint256" }],
+    inputs: [{ name: "fileHash", type: "bytes32" }],
+    outputs: [{ type: "bool" }],
   },
 ] as const;
