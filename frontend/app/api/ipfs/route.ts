@@ -75,6 +75,9 @@ export async function POST(req: Request) {
     }
 
     const metaJson = await metaUpload.json();
+    console.log("File stored at:", `ipfs://${fileJson.IpfsHash}`);
+    console.log("Metadata stored at:", `ipfs://${metaJson.IpfsHash}`);
+
 
     /* ------------------ Success response ------------------ */
     return NextResponse.json({
