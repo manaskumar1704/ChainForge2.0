@@ -7,6 +7,21 @@ import { ConnectWallet } from "../components/ConnectWallet";
 import { useChainForgeContract } from "../hooks/useChainForgeContract";
 import { mintChainForgeNFT } from "../lib/mintChainForgeNFT";
 
+/* shadcn imports */
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import {
+  Alert,
+  AlertTitle,
+  AlertDescription,
+} from "../components/ui/alert";
+
 export default function Home() {
   const contract = useChainForgeContract();
 
@@ -15,6 +30,8 @@ export default function Home() {
   const [forging, setForging] = useState(false);
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const readyToMint = Boolean(contract && metadataUri && fileHash && !forging);
 
   async function handleMint() {
     if (!contract || !metadataUri || !fileHash) return;
@@ -26,74 +43,128 @@ export default function Home() {
       const receipt = await mintChainForgeNFT({
         contract,
         metadataUri,
-        fileHash, // ✅ REQUIRED by contract
+        fileHash,
       });
+
+      if (receipt.status !== "success") {
+        throw new Error("Transaction failed");
+      }
 
       setTxHash(receipt.transactionHash);
     } catch (err) {
       console.error(err);
-      setError("Mint failed. Check console or wallet.");
+      setError("Mint failed. Transaction was reverted or rejected.");
     } finally {
       setForging(false);
     }
   }
+ 
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-6 px-4">
-      <h1 className="text-3xl font-bold">ChainForge 2.0</h1>
+    <main className="min-h-screen bg-black text-white">
+      <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
 
-      {/* Wallet */}
-      <ConnectWallet />
+        {/* Header */}
+        <h1 className="text-3xl font-bold text-center">ChainForge 2.0</h1>
+        <p className="text-center text-sm text-gray-400">
+          Forge cryptographic proof of existence on Ethereum
+        </p>
 
-      {/* Upload + Hash + IPFS metadata */}
-      <FileUploader
-        onFileProcessed={(hashHex, uri) => {
-          console.log("File hash:", hashHex);
-          console.log("Metadata URI:", uri);
+        {/* Wallet */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Wallet</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ConnectWallet />
+          </CardContent>
+        </Card>
 
-          setFileHash(`0x${hashHex}`); // ✅ convert to bytes32
-          setMetadataUri(uri);
-        }}
-      />
+        {/* Upload */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Upload File</CardTitle>
+            <CardDescription>
+              Your file never leaves your device. Only its hash is forged.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <FileUploader
+              onFileProcessed={(hashHex, uri) => {
+                setFileHash(`0x${hashHex}`);
+                setMetadataUri(uri);
+              }}
+            />
+          </CardContent>
+        </Card>
 
-      {/* Show Metadata URI */}
-      {metadataUri && (
-        <div className="text-xs break-all bg-gray-900 text-blue-400 p-2 rounded max-w-md">
-          <strong>Metadata URI:</strong>
-          <br />
-          {metadataUri}
-        </div>
-      )}
+        {/* Proof */}
+        {metadataUri && fileHash && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Proof Generated</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs">
+              <div className="break-all bg-gray-900 p-2 rounded">
+                <strong>SHA-256</strong>
+                <div className="text-green-400">{fileHash}</div>
+              </div>
 
-      {/* Hammer Animation */}
-      <HammerAnimation active={forging} />
+              <div className="break-all bg-gray-900 p-2 rounded">
+                <strong>Metadata URI</strong>
+                <div className="text-blue-400">{metadataUri}</div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Forge Button */}
-      <button
-        disabled={!contract || !metadataUri || !fileHash || forging}
-        onClick={handleMint}
-        className={`px-6 py-3 rounded-lg text-white ${
-          !contract || !metadataUri || !fileHash || forging
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-orange-600"
-        }`}
-      >
-        Forge NFT
-      </button>
+        {/* Forge */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Forge NFT</CardTitle>
+            <CardDescription>
+              Mint this proof permanently on Ethereum
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <HammerAnimation active={forging} />
 
-      {/* Transaction Status */}
-      {txHash && (
-        <a
-          href={`https://sepolia.etherscan.io/tx/${txHash}`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs text-green-500"
-        >
-          View mint on Etherscan
-        </a>
-      )}
+            <Button
+              className="w-full bg-orange-600 hover:bg-orange-700"
+              disabled={!readyToMint}
+              onClick={handleMint}
+            >
+              Forge NFT
+            </Button>
+          </CardContent>
+        </Card>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+        {/* Success */}
+        {txHash && (
+          <Alert className="border-green-600">
+            <AlertTitle>Forged Successfully</AlertTitle>
+            <AlertDescription>
+              <a
+                href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="underline text-green-400"
+              >
+                View transaction on Etherscan
+              </a>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Error */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Mint Failed</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+      </div>
     </main>
   );
 }
