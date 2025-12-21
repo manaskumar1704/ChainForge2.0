@@ -2,15 +2,25 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
-    const hash = formData.get("hash") as string;
-
-    if (!file || !hash) {
-      return NextResponse.json({ error: "Missing file or hash" }, { status: 400 });
+    if (!process.env.PINATA_JWT) {
+      return NextResponse.json(
+        { error: "Pinata JWT not configured" },
+        { status: 500 }
+      );
     }
 
-    // 1. Upload file to Pinata
+    const formData = await req.formData();
+    const file = formData.get("file") as File | null;
+    const hash = formData.get("hash") as string | null;
+
+    if (!file || !hash) {
+      return NextResponse.json(
+        { error: "Missing file or hash" },
+        { status: 400 }
+      );
+    }
+
+    /* ------------------ Upload file to IPFS ------------------ */
     const fileData = new FormData();
     fileData.append("file", file);
 
@@ -19,16 +29,23 @@ export async function POST(req: Request) {
       {
         method: "POST",
         headers: {
-          pinata_api_key: process.env.PINATA_API_KEY!,
-          pinata_secret_api_key: process.env.PINATA_SECRET_API_KEY!,
+          Authorization: `Bearer ${process.env.PINATA_JWT}`,
         },
         body: fileData,
       }
     );
 
+    if (!fileUpload.ok) {
+      const err = await fileUpload.text();
+      return NextResponse.json(
+        { error: "File upload to Pinata failed", details: err },
+        { status: 500 }
+      );
+    }
+
     const fileJson = await fileUpload.json();
 
-    // 2. Create metadata
+    /* ------------------ Create metadata ------------------ */
     const metadata = {
       name: file.name,
       description: "Forged via ChainForge 2.0",
@@ -36,28 +53,39 @@ export async function POST(req: Request) {
       image: `ipfs://${fileJson.IpfsHash}`,
     };
 
-    // 3. Upload metadata
+    /* ------------------ Upload metadata ------------------ */
     const metaUpload = await fetch(
       "https://api.pinata.cloud/pinning/pinJSONToIPFS",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          pinata_api_key: process.env.PINATA_API_KEY!,
-          pinata_secret_api_key: process.env.PINATA_SECRET_API_KEY!,
+          Authorization: `Bearer ${process.env.PINATA_JWT}`,
         },
         body: JSON.stringify(metadata),
       }
     );
 
+    if (!metaUpload.ok) {
+      const err = await metaUpload.text();
+      return NextResponse.json(
+        { error: "Metadata upload to Pinata failed", details: err },
+        { status: 500 }
+      );
+    }
+
     const metaJson = await metaUpload.json();
 
+    /* ------------------ Success response ------------------ */
     return NextResponse.json({
       fileIpfs: fileJson.IpfsHash,
       metadataIpfs: metaJson.IpfsHash,
       metadataUri: `ipfs://${metaJson.IpfsHash}`,
     });
-  } catch (err) {
-    return NextResponse.json({ error: "IPFS upload failed" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Unexpected IPFS upload error" },
+      { status: 500 }
+    );
   }
 }
