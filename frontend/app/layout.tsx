@@ -1,5 +1,10 @@
 import "./globals.css";
 import { Providers } from "./providers";
+import { ForgeBackground } from "../components/ForgeBackground";
+import { PageTransition } from "../components/PageTransition";
+import { metadata } from "./metadata";
+
+export { metadata };
 
 export default function RootLayout({
   children,
@@ -8,8 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <Providers>{children}</Providers>
+      <body className="min-h-screen text-foreground">
+        <Providers>
+          <ForgeBackground />
+          <PageTransition>{children}</PageTransition>
+        </Providers>
       </body>
     </html>
   );

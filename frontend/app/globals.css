@@ -123,3 +123,42 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* =========================
+   Subtle Animated Forge Background
+   ========================= */
+
+@keyframes forgeGlow {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.25; }
+}
+
+.forge-glow {
+  position: fixed;
+  bottom: -30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120%;
+  height: 60%;
+  background: radial-gradient(
+    circle,
+    rgba(249,115,22,0.35),
+    transparent 70%
+  );
+  animation: forgeGlow 12s ease-in-out infinite;
+  pointer-events: none;
+
+  .forge-bg {
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(
+    120deg,
+    oklch(0.08 0.01 285),
+    oklch(0.12 0.03 35),
+    oklch(0.08 0.01 285)
+  );
+  background-size: 400% 400%;
+  animation: forgeFlow 26s ease infinite;
+}
+
+}

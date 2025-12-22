@@ -42,8 +42,8 @@ export function FileUploader({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <label className="cursor-pointer px-4 py-2 border rounded-lg">
+    <div className="flex flex-col items-center gap-4 ">
+      <label className="cursor-pointer px-4 py-2 border rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
         Upload File
         <input
           type="file"

@@ -1,35 +1,48 @@
-import { writeContract, waitForTransactionReceipt } from "viem/actions";
-import { sepolia } from "viem/chains";
+import { Address, Hex } from "viem";
+
+type WriteContractArgs = {
+  address: Address;
+  abi: unknown;
+  functionName: string;
+  args: readonly unknown[];
+  account: Address;
+};
+
+type ChainForgeContract = {
+  address: Address;
+  abi: unknown;
+  walletClient: {
+    writeContract: (args: WriteContractArgs) => Promise<Hex>;
+  };
+  publicClient: {
+    waitForTransactionReceipt: (args: {
+      hash: Hex;
+    }) => Promise<{
+      status: "success" | "reverted";
+      transactionHash: Hex;
+    }>;
+  };
+  account: Address;
+};
 
 export async function mintChainForgeNFT({
   contract,
   metadataUri,
   fileHash,
 }: {
-  contract: {
-    address: `0x${string}`;
-    abi: any;
-    walletClient: any;
-    publicClient: any;
-    account: `0x${string}`;
-  };
+  contract: ChainForgeContract;
   metadataUri: string;
-  fileHash: `0x${string}`;
+  fileHash: Hex;
 }) {
-  const hash = await writeContract(contract.walletClient, {
+  const hash = await contract.walletClient.writeContract({
     address: contract.address,
     abi: contract.abi,
-    functionName: "mintAsset", // ✅ correct
-    args: [metadataUri, fileHash], // ✅ both args
+    functionName: "mintAsset",
+    args: [metadataUri, fileHash],
     account: contract.account,
-    chain: sepolia,
-    gas: BigInt(1_000_000),
   });
 
-  const receipt = await waitForTransactionReceipt(
-    contract.publicClient,
-    { hash }
-  );
-
-  return receipt;
+  return await contract.publicClient.waitForTransactionReceipt({
+    hash,
+  });
 }
