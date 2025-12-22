@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
+
 import { useChainForgeContract } from "../../hooks/useChainForgeContract";
 import { mintChainForgeNFT } from "../../lib/mintChainForgeNFT";
 import { useForgeFlow } from "../../store/useForgeFlow";
@@ -20,29 +22,31 @@ export default function ForgePage() {
   const router = useRouter();
   const contract = useChainForgeContract();
 
+  const { address, isConnected } = useAccount(); // ✅ ADDED
+
   const { walletConnected, fileHash, metadataUri, setTxHash } =
     useForgeFlow();
 
   const [forging, setForging] = useState(false);
 
   useEffect(() => {
-    if (!walletConnected) router.replace("/connect");
+    if (!walletConnected || !isConnected) router.replace("/connect");
     if (!fileHash || !metadataUri) router.replace("/upload");
-  }, [walletConnected, fileHash, metadataUri, router]);
+  }, [walletConnected, isConnected, fileHash, metadataUri, router]);
 
   async function handleForge() {
-    if (!contract || !fileHash || !metadataUri) return;
+    if (!contract || !fileHash || !metadataUri || !address) return;
 
     setForging(true);
     try {
-      const receipt = await mintChainForgeNFT({
+      const txHash = await mintChainForgeNFT({
         contract,
         metadataUri,
         fileHash,
+        account: address, // ✅ REQUIRED FOR VIEM
       });
 
-      if (receipt.status !== "success") throw new Error();
-      setTxHash(receipt.transactionHash);
+      setTxHash(txHash);
       router.replace("/success");
     } catch {
       router.replace("/failure");
@@ -74,14 +78,13 @@ export default function ForgePage() {
 
           <Button
             className="w-full bg-orange-600 hover:bg-orange-700"
-            disabled={!contract || forging}
+            disabled={!contract || forging || !address}
             onClick={handleForge}
           >
             {forging ? "Forging…" : "Confirm & Forge"}
           </Button>
         </CardContent>
       </Card>
-
     </div>
   );
 }

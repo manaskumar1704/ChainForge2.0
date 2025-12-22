@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useAccount, useDisconnect, useConnect } from "wagmi";
-import { injected } from "wagmi/connectors";
+import { useEffect, useRef, useMemo } from "react";
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { injected, walletConnect } from "wagmi/connectors";
 import { useRouter } from "next/navigation";
 
 import { useForgeFlow } from "../../store/useForgeFlow";
@@ -13,18 +13,25 @@ import {
   CardTitle,
   CardContent,
 } from "../../components/ui/card";
-import { Wallet } from "lucide-react";
+
+import { Wallet, Smartphone } from "lucide-react";
 
 export default function ConnectPage() {
   const { isConnected, address } = useAccount();
-  const { disconnect } = useDisconnect();
   const { connect, isPending } = useConnect();
+  const { disconnect } = useDisconnect();
   const router = useRouter();
 
-  const setWalletConnected = useForgeFlow(s => s.setWalletConnected);
+  const setWalletConnected = useForgeFlow((s) => s.setWalletConnected);
   const hasReset = useRef(false);
 
-  // 🔐 Disconnect ONCE when entering flow
+  // ✅ Safe injected-wallet detection (no `any`)
+  const hasInjectedWallet = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return "ethereum" in window;
+  }, []);
+
+  // 🔐 Disconnect ONCE when entering the flow
   useEffect(() => {
     if (!hasReset.current) {
       disconnect();
@@ -32,11 +39,11 @@ export default function ConnectPage() {
     }
   }, [disconnect]);
 
-  // ➡️ Move forward once connected
+  // ➡️ Advance once connected
   useEffect(() => {
     if (isConnected) {
       setWalletConnected(true);
-      router.push("/upload");
+      router.replace("/upload");
     }
   }, [isConnected, router, setWalletConnected]);
 
@@ -46,22 +53,54 @@ export default function ConnectPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5 text-neutral-400" />
-            <div className="text-blue-400">Connect Wallet</div>
+            <span className="text-blue-400">Connect Wallet</span>
           </CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <p className="text-sm text-neutral-400">
-            Connect an Ethereum wallet to begin forging a proof of existence.
+            Connect an Ethereum wallet to begin forging a cryptographic proof of
+            existence.
           </p>
 
+          {/* Injected wallet */}
+          {hasInjectedWallet ? (
+            <Button
+              className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              onClick={() => connect({ connector: injected() })}
+              disabled={isPending}
+            >
+              <Wallet className="h-4 w-4" />
+              {isPending ? "Connecting…" : "Connect Browser Wallet"}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full border-neutral-700 text-neutral-300"
+              onClick={() =>
+                window.open("https://metamask.io/download/", "_blank")
+              }
+            >
+              Install MetaMask
+            </Button>
+          )}
+
+          {/* WalletConnect (always available) */}
           <Button
-            className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-            onClick={() => connect({ connector: injected() })}
+            variant="secondary"
+            className="w-full flex items-center gap-2"
+            onClick={() =>
+              connect({
+                connector: walletConnect({
+                  projectId:
+                    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+                }),
+              })
+            }
             disabled={isPending}
           >
-            <Wallet className="h-4 w-4" />
-            {isPending ? "Connecting..." : "Connect Wallet"}
+            <Smartphone className="h-4 w-4" />
+            Connect with WalletConnect
           </Button>
 
           {address && (
@@ -69,6 +108,10 @@ export default function ConnectPage() {
               Connected: {address.slice(0, 6)}…{address.slice(-4)}
             </p>
           )}
+
+          <p className="text-xs text-neutral-500 text-center pt-2">
+            Works on desktop, mobile, and tablets
+          </p>
         </CardContent>
       </Card>
     </main>
