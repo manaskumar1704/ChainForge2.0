@@ -76,7 +76,7 @@ export default function ConnectPage() {
           ) : (
             <Button
               variant="outline"
-              className="w-full border-neutral-700 text-neutral-300"
+              className="w-full border-neutral-700 h-4 w-4"
               onClick={() =>
                 window.open("https://metamask.io/download/", "_blank")
               }
