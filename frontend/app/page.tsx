@@ -7,7 +7,7 @@ export default function LandingPage() {
     <main className="min-h-screen relative z-10 flex items-center justify-center px-4">
       <div className="max-w-xl text-center space-y-6">
 
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-neutral-400">
           ChainForge <span className="text-blue-400">2.0</span>
         </h1>
 
