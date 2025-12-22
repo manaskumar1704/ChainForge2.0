@@ -1,18 +1,10 @@
 import { Address, Hex } from "viem";
 
-type WriteContractArgs = {
-  address: Address;
-  abi: unknown;
-  functionName: string;
-  args: readonly unknown[];
-  account: Address;
-};
-
-type ChainForgeContract = {
+export type ChainForgeContract = {
   address: Address;
   abi: unknown;
   walletClient: {
-    writeContract: (args: WriteContractArgs) => Promise<Hex>;
+    writeContract: (...args: any[]) => Promise<Hex>;
   };
   publicClient: {
     waitForTransactionReceipt: (args: {
@@ -42,7 +34,5 @@ export async function mintChainForgeNFT({
     account: contract.account,
   });
 
-  return await contract.publicClient.waitForTransactionReceipt({
-    hash,
-  });
+  return contract.publicClient.waitForTransactionReceipt({ hash });
 }

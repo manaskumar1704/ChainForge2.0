@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "ChainForge 2.0 — Proof of Existence on Ethereum",
+  metadataBase: new URL("https://YOUR-VERCEL-URL.vercel.app"),
+  title: {
+    default: "ChainForge 2.0",
+    template: "%s | ChainForge 2.0",
+  },
   description:
-    "ChainForge lets you cryptographically prove the existence of digital files by hashing locally and minting immutable NFT proofs on Ethereum.",
-  keywords: [
-    "blockchain",
-    "ethereum",
-    "web3",
-    "proof of existence",
-    "nft",
-    "cryptography",
-  ],
+    "ChainForge lets you forge cryptographic proof of existence for digital files on Ethereum.",
   openGraph: {
     title: "ChainForge 2.0",
-    description: "Forge cryptographic proof of existence on Ethereum.",
-    images: ["/og.png"],
+    description:
+      "Forge cryptographic proof of existence for digital files on Ethereum.",
+    type: "website",
   },
 };
