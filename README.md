@@ -1,6 +1,4 @@
-  
-
-# ChainForge 2.0
+  # ChainForge 2.0
 
 ChainForge 2.0 is a Web3 application that allows users to prove the existence of a digital file at a specific point in time **without ever uploading the file itself**.
 
