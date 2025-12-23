@@ -1,8 +1,8 @@
 import "./globals.css";
 import { Providers } from "./providers";
 import { ForgeBackground } from "../components/ForgeBackground";
-import { PageTransition } from "../components/PageTransition";
 import { metadata } from "./metadata";
+import Link from "next/link";
 
 export { metadata };
 
@@ -15,8 +15,13 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen text-foreground">
         <Providers>
+          <header className="py-4 px-8 flex justify-between items-center">
+            <Link href="/" className="text-2xl font-bold tracking-tight text-neutral-300">
+              ChainForge <span className="text-blue-400">2.0</span>
+            </Link>
+          </header>
           <ForgeBackground />
-          <PageTransition>{children}</PageTransition>
+          <main>{children}</main>
         </Providers>
       </body>
     </html>

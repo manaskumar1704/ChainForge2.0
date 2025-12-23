@@ -1,169 +1,207 @@
-  # ChainForge 2.0
+# ChainForge 2.0
 
-ChainForge 2.0 is a Web3 application that allows users to prove the existence of a digital file at a specific point in time **without ever uploading the file itself**.
+**ChainForge 2.0** is a privacy‑first Web3 application that creates **cryptographic proof of existence** for digital files using client‑side hashing and Ethereum.
 
-The file is hashed locally in the browser, only the cryptographic proof is stored on IPFS, and that proof is minted as an NFT on Ethereum.
-
-* * *
-
-## Motivation
-
-Most NFT platforms upload entire files to IPFS, which is not ideal for private or sensitive data such as research papers, legal documents, designs, or source code.
-
-ChainForge was built to answer a simple question:
-
-How can someone prove ownership or existence of a file without revealing the file itself?
+It allows users to prove that a file existed at a specific point in time **without ever uploading the file itself**.
 
 * * *
 
-## What ChainForge Does
+## What Problem Does ChainForge Solve?
 
-*   Generates a SHA-256 hash locally in the browser
+Digital files are trivial to copy and easy to dispute.
+
+ChainForge solves this by:
+
+*   Generating a cryptographic fingerprint (SHA‑256) of a file **locally in the browser**
     
-*   Uploads hash-only metadata to IPFS
+*   Permanently anchoring that fingerprint on Ethereum
     
-*   Mints an ERC-721 NFT representing the proof
+*   Enabling anyone to later verify authenticity without revealing the original file
     
-*   Prevents duplicate minting of the same file hash
+
+This creates **tamper‑proof, timestamped proof of existence**.
+
+* * *
+
+## Core Guarantees
+
+*   🔐 **Privacy‑First** — Files never leave the user’s device
     
-*   Allows verification of whether a file hash was already forged
+*   🧮 **Client‑Side Cryptography** — Hashing happens locally
     
-*   Guides users through a strict, step-by-step flow
+*   ⛓️ **On‑Chain Immutability** — Proof is stored on Ethereum (Sepolia)
+    
+*   🔍 **Public Verifiability** — Anyone can verify without wallets
     
 
 * * *
 
-## Application Flow
+## How It Works
 
-1.  Landing page explaining the concept
+1.  **Connect Wallet**
     
-2.  Wallet connection
+    *   Wallet is required only for minting the proof
+        
+2.  **Upload File**
     
-3.  Local file hashing (file never leaves device)
+    *   File is hashed locally using SHA‑256
+        
+    *   Raw file data is never uploaded
+        
+3.  **Preview Proof**
     
-4.  Proof preview (hash + metadata)
+    *   Review file hash and metadata before minting
+        
+4.  **Forge Proof**
     
-5.  NFT minting
+    *   Hash is minted as an NFT on Ethereum
+        
+    *   Transaction permanently timestamps existence
+        
+5.  **Verify Anytime**
     
-6.  Success or failure result
-    
-7.  Verification page
-    
-
-Each step is route-guarded to prevent skipping or inconsistent state.
-
-* * *
-
-## Smart Contract Overview
-
-The smart contract enforces uniqueness and immutability:
-
-*   Each file hash can only be minted once
-    
-*   Metadata is immutable
-    
-*   Events are emitted for provenance tracking
-    
-
-`function mintAsset(     string calldata tokenURI,     bytes32 fileHash ) external;`
+    *   Upload the same file later to verify if it exists on‑chain
+        
 
 * * *
 
-## Tech Stack
+## Why an NFT?
+
+The NFT is not used as an art asset.
+
+It is used as:
+
+*   A **non‑repudiable ownership container**
+    
+*   A **globally verifiable proof object**
+    
+*   A permanent, indexed on‑chain record
+    
+
+Ownership is secondary. **Existence and timestamp are primary.**
+
+* * *
+
+## Design Philosophy
+
+ChainForge is designed as a **trust product**, not a Web3 toy.
+
+Design priorities:
+
+*   Deterministic flows
+    
+*   Minimal UI
+    
+*   Clear cryptographic intent
+    
+*   Zero hype, zero distraction
+    
+
+The UI avoids NFT‑marketplace patterns and instead resembles a **forensic or legal tool**.
+
+Full design constraints are documented in **DESIGN.md**.
+
+* * *
+
+## Architecture Overview
 
 ### Frontend
 
-*   Next.js 16 (App Router)
+*   **Next.js (App Router)**
     
-*   TypeScript
+*   **TypeScript (strict)**
     
-*   Tailwind CSS
+*   **Tailwind CSS + shadcn/ui**
     
-*   shadcn/ui
-    
-*   Framer Motion
-    
-*   Zustand
-    
-*   wagmi + viem
+*   **Wagmi + viem** for Ethereum interactions
     
 
 ### Blockchain
 
-*   Solidity
+*   **Solidity smart contract**
     
-*   Hardhat
+*   **Hardhat** for development
     
-*   OpenZeppelin
-    
-*   Sepolia testnet
+*   **Sepolia testnet** deployment
     
 
 ### Storage
 
-*   IPFS via Pinata (JWT authentication)
+*   **Metadata** stored on IPFS (via Pinata)
+    
+*   **Only hashes** are recorded on‑chain
     
 
 * * *
 
-## Running Locally
+## Key Technical Decisions
 
-`git clone https://github.com/your-username/chainforge-2.0.git cd chainforge-2.0/frontend bun install bun dev`
-
-Environment variables:
-
-`PINATA_JWT=your_pinata_jwt NEXT_PUBLIC_SEPOLIA_RPC_URL=your_rpc_url`
-
-* * *
-
-## Quality and Stability
-
-*   No file uploads, only hashes
+*   No backend server
     
-*   No exposed API keys
+*   No file uploads
     
-*   Wallet resets between sessions
+*   No centralized database
     
-*   ESLint and TypeScript checks passing
+*   Read‑only verification does not require wallet connection
     
-*   Production build tested
+
+This keeps the system:
+
+*   Simple
+    
+*   Auditable
+    
+*   Trust‑minimized
     
 
 * * *
 
-## Deployment
+## Project Structure (High Level)
 
-*   Frontend hosted on Vercel
+    frontend/
+      app/           # App Router pages
+      components/    # UI + visual components
+      hooks/         # Ethereum & app hooks
+      lib/           # Blockchain helpers
+      store/         # Forge flow state
     
-*   Network: Sepolia
+    contracts/
+      ChainForgeNFT.sol
     
-*   Storage: IPFS (Pinata)
-    
-
-* * *
-
-## About the Author
-
-Manas Kumar  
-Undergraduate Computer Science student interested in blockchain systems, full-stack development, and building practical Web3 applications.
-
-* * *
-
-## Future Improvements
-
-*   Gas optimizations
-    
-*   Mainnet deployment
-    
-*   Batch verification
-    
-*   Enhanced forge animations
-    
-*   SEO and analytics improvements
+    hardhat.config.ts
     
 
 * * *
 
-## License
+## Status
 
-MIT
+*   Forge flow: ✅ Complete
+    
+*   Verification flow: ✅ Complete
+    
+*   Design system: ✅ Locked
+    
+*   Flow documentation: ✅ Locked
+    
+
+ChainForge 2.0 is functionally complete and portfolio‑ready.
+
+* * *
+
+## Disclaimer
+
+This project is a **technical and educational demonstration**.
+
+Do not use it for legal proof without independent legal review.
+
+* * *
+
+## Author
+
+Built as a portfolio‑grade Web3 system focusing on:
+
+*   Cryptographic correctness
+    
+*   Deterministic UX
+    
+*   Production‑quality architecture

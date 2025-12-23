@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useForgeFlow } from "../../store/useForgeFlow";
+import { Upload, FileCheck2, ArrowLeft, Clipboard, Hammer } from "lucide-react";
+
 import { useChainForgeContract } from "../../hooks/useChainForgeContract";
 
 /* shadcn */
@@ -18,120 +22,258 @@ import {
   AlertDescription,
 } from "../../components/ui/alert";
 
+type ProofInfo = {
+  tokenId: bigint | null;
+  owner: `0x${string}`;
+};
+
 export default function VerifyPage() {
+  const router = useRouter();
   const contract = useChainForgeContract();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const { setFileHash, setMetadataUri } = useForgeFlow();
 
   const [hash, setHash] = useState<`0x${string}` | null>(null);
-  const [result, setResult] = useState<boolean | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [exists, setExists] = useState<boolean | null>(null);
+  const [proof, setProof] = useState<ProofInfo | null>(null);
   const [loading, setLoading] = useState(false);
+  const [copySuccess, setCopySuccess] = useState<string | null>(null);
 
   async function handleFileChange(
     e: React.ChangeEvent<HTMLInputElement>
   ) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !contract) return;
 
-    setResult(null);
+    setExists(null);
+    setProof(null);
     setLoading(true);
+    setFileName(file.name);
 
-    // Compute SHA-256
-    const buffer = await file.arrayBuffer();
-    const digest = await crypto.subtle.digest("SHA-256", buffer);
-    const hashHex =
-      "0x" +
-      Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+    try {
+      /* 1️⃣ Compute SHA-256 locally */
+      const buffer = await file.arrayBuffer();
+      const digest = await crypto.subtle.digest("SHA-256", buffer);
+      const hashHex =
+        "0x" +
+        Array.from(new Uint8Array(digest))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
 
-    setHash(hashHex as `0x${string}`);
+      const fileHash = hashHex as `0x${string}`;
+      setHash(fileHash);
+      setFileHash(fileHash);
 
-    if (!contract) {
+      /* 2️⃣ Check existence via contract */
+      const owner = await contract.publicClient.readContract({
+        address: contract.address,
+        abi: contract.abi,
+        functionName: "getOwnerByHash",
+        args: [fileHash],
+      });
+
+      if (owner === "0x0000000000000000000000000000000000000000") {
+        setExists(false);
+        // Create a dummy metadata URI for now
+        const metadata = {
+          name: "ChainForge Proof",
+          description: `Cryptographic proof for file: ${file.name}`,
+          file_hash: fileHash,
+        };
+        const metadataJson = JSON.stringify(metadata);
+        const metadataBase64 = Buffer.from(metadataJson).toString("base64");
+        setMetadataUri(`data:application/json;base64,${metadataBase64}`);
+        return;
+      }
+
+      setExists(true);
+
+      /* 3️⃣ Resolve tokenId (optional) */
+      let tokenId: bigint | null = null;
+      try {
+        tokenId = await contract.publicClient.readContract({
+          address: contract.address,
+          abi: contract.abi,
+          functionName: "getTokenIdByHash",
+          args: [fileHash],
+        }) as bigint;
+      } catch {
+        tokenId = null;
+      }
+
+      setProof({
+        tokenId,
+        owner: owner as `0x${string}`,
+      });
+    } catch (err) {
+      console.error(err);
+      setExists(false);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Read-only verification
-    const exists = await contract.publicClient.readContract({
-      address: contract.address,
-      abi: contract.abi,
-      functionName: "verifyAsset",
-      args: [hashHex as `0x${string}`],
-    });
-
-    setResult(Boolean(exists));
-    setLoading(false);
   }
 
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopySuccess(type);
+      setTimeout(() => setCopySuccess(null), 2000);
+    }, (err) => {
+      console.error('Failed to copy: ', err);
+    });
+  };
+
+  const handleVerifyAnother = () => {
+    setHash(null);
+    setFileName(null);
+    setExists(null);
+    setProof(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
+    <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
 
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
-          ChainForge 2.0
-        </h1>
+      
 
-        <p className="mt-1 text-center text-sm md:text-base text-neutral-400 max-w-md mx-auto">
-          Forge cryptographic proof of existence on Ethereum
-        </p>
+      {/* UPLOAD CARD — matches /upload */}
+      <Card className="bg-neutral-900/80 border-neutral-800">
+        <CardHeader>
+          <CardTitle className="text-blue-400">Verify File</CardTitle>
+          <CardDescription className="text-neutral-400">
+            Your file is hashed locally. Nothing is uploaded.
+          </CardDescription>
+        </CardHeader>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Verify File</CardTitle>
-            <CardDescription>
-              Upload a file to check if its cryptographic proof exists on-chain.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-4">
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="block w-full text-sm"
-            />
-
-            {loading && (
-              <p className="text-sm text-gray-400">
-                Verifying file hash on Ethereum…
-              </p>
+        <CardContent className="space-y-4">
+          <div
+            onClick={() => !hash && fileInputRef.current?.click()}
+            className={`cursor-pointer rounded-lg border border-dashed border-neutral-700 bg-neutral-950/60 ${!hash ? 'hover:bg-neutral-900/60' : ''} transition p-6 text-center space-y-3`}
+          >
+            {hash ? (
+              <FileCheck2 className="h-6 w-6 text-green-400 mx-auto" />
+            ) : (
+              <Upload className="h-6 w-6 text-blue-400 mx-auto" />
             )}
 
-            {hash && (
-              <div className="break-all bg-gray-900 p-2 rounded text-xs">
-                <strong>SHA-256</strong>
-                <div className="text-blue-400 mt-1">{hash}</div>
+            <div className="text-sm text-neutral-300">
+              {fileName || (hash ? "File selected" : "Click to select a file")}
+            </div>
+
+            <div className="text-xs text-neutral-500">
+              Files never leave your device
+            </div>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileChange}
+            className="hidden"
+          />
+
+          {loading && (
+            <p className="text-sm text-neutral-400">
+              Verifying proof on Ethereum…
+            </p>
+          )}
+
+          {hash && (
+            <div className="relative break-all bg-gray-900 p-3 rounded text-green-400 text-xs">
+              <strong>SHA-256</strong>
+              <div className="mt-1 pr-10">{hash}</div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-2 right-2 h-8 w-8"
+                onClick={() => copyToClipboard(hash, 'hash')}
+              >
+                <Clipboard className="h-4 w-4" />
+              </Button>
+              {copySuccess === 'hash' && <div className="absolute top-2 right-12 text-xs text-green-400">Copied!</div>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {exists === false && (
+        <Alert variant="destructive">
+          <AlertTitle>Not Found</AlertTitle>
+          <AlertDescription>
+            This file has not been forged yet.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {exists === true && proof && (
+        <Alert className="border-green-600">
+          <AlertTitle>Verified</AlertTitle>
+          <AlertDescription className="space-y-2 text-sm">
+            <div className="relative">
+              <strong>Minter:</strong>{" "}
+              <a
+                href={`https://sepolia.etherscan.io/address/${proof.owner}`}
+                target="_blank"
+                rel="noreferrer"
+                className="underline text-blue-400"
+              >
+                {proof.owner}
+              </a>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-[-8px] right-0 h-8 w-8"
+                onClick={() => copyToClipboard(proof.owner, 'minter')}
+              >
+                <Clipboard className="h-4 w-4" />
+              </Button>
+              {copySuccess === 'minter' && <div className="absolute top-1 right-10 text-xs text-green-400">Copied!</div>}
+            </div>
+
+            {proof.tokenId !== null && (
+              <div>
+                <strong>Token ID:</strong>{" "}
+                {proof.tokenId.toString()}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {/* Result */}
-        {result === true && (
-          <Alert className="border-green-600">
-            <AlertTitle>Verified</AlertTitle>
-            <AlertDescription>
-              This file has already been forged on ChainForge.
-            </AlertDescription>
-          </Alert>
-        )}
+      {exists !== null && !loading && (
+        <div className="flex flex-col items-center gap-4">
+          <Button
+            variant="secondary"
+            className="w-full max-w-xs flex items-center gap-2"
+            onClick={handleVerifyAnother}
+          >
+            <Upload className="h-4 w-4" />
+            Verify Another File
+          </Button>
+          {exists === false && (
+            <Button
+              className="w-full max-w-xs bg-orange-600 hover:bg-orange-700 flex items-center gap-2"
+              onClick={() => router.push("/forge")}
+            >
+              <Hammer className="h-4 w-4" />
+              Proceed to Forge
+            </Button>
+          )}
+        </div>
+      )}
 
-        {result === false && (
-          <Alert variant="destructive">
-            <AlertTitle>Not Found</AlertTitle>
-            <AlertDescription>
-              This file has not been forged yet.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <Button
-          variant="secondary"
-          className="w-full"
-          onClick={() => window.history.back()}
-        >
-          Back
-        </Button>
-
-      </div>
-    </main>
+      <Button
+        variant="secondary"
+        className="w-full flex items-center justify-center gap-2"
+        onClick={() => router.push("/")}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Home
+      </Button>
+    </div>
   );
 }
+

@@ -1,10 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useForgeFlow } from "../../store/useForgeFlow";
-
-/* shadcn */
 import {
   Card,
   CardHeader,
@@ -13,73 +9,70 @@ import {
   CardContent,
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
+import { ClipboardCopy, Search } from "lucide-react";
 
 export default function SuccessPage() {
-  const router = useRouter();
-
-  const {
-    walletConnected,
-    txHash,
-    reset,
-  } = useForgeFlow();
-
-  // 🔐 Route guard
-  useEffect(() => {
-    if (!walletConnected || !txHash) {
-      router.replace("/");
-    }
-  }, [walletConnected, txHash, router]);
-
-  function handleStartOver() {
-    reset();
-    router.replace("/connect");
-  }
-
-  if (!txHash) return null;
+  const { fileHash, metadataUri } = useForgeFlow();
 
   return (
-    <div className="max-w-md mx-auto px-4 py-16 space-y-6">
+    <div className="max-w-xl mx-auto px-4 py-10 space-y-6">
 
-      <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-center text-neutral-400">
-        ChainForge 2.0
+      <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-neutral-300 flex justify-center">
+        ChainForge <span className="text-blue-400">2.0</span>
       </h1>
 
-      <p className="mt-1 text-center text-sm md:text-base text-neutral-400 max-w-md mx-auto">
-        Forge cryptographic proof of existence on Ethereum
-      </p>
-
-      <Card className="bg-neutral-900/80 border-neutral-800">
+      <Card className="bg-neutral-900/80 border-neutral-800 backdrop-blur">
         <CardHeader>
-          <CardTitle className="text-blue-400">Forge Successful</CardTitle>
-          <CardDescription className="text-neutral-500">
-            Your cryptographic proof has been permanently recorded on Ethereum.
+          <CardTitle className="text-blue-400">
+            Proof created successfully
+          </CardTitle>
+          <CardDescription className="text-neutral-400">
+            Save or share the details below.
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4 text-sm">
-          <div className="break-all bg-gray-900 p-3 rounded text-green-400">
-            <strong>Transaction Hash</strong>
-            <div className="text-green-400 mt-1">{txHash}</div>
+        <CardContent className="space-y-4 text-sm text-neutral-400">
+          <div className="break-all bg-gray-900 p-3 rounded">
+            <strong>File Hash</strong>
+            <div className="text-green-400 mt-1">{fileHash}</div>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex items-center gap-2 mt-2"
+              onClick={() => navigator.clipboard.writeText(fileHash!)}
+            >
+              <ClipboardCopy className="h-4 w-4" />
+              Copy
+            </Button>
           </div>
 
-          <a
-            href={`https://sepolia.etherscan.io/tx/${txHash}`}
-            target="_blank"
-            rel="noreferrer"
-            className="block text-center underline text-blue-400"
-          >
-            View on Etherscan
-          </a>
+          <div className="break-all bg-gray-900 p-3 rounded">
+            <strong>IPFS Metadata URL</strong>
+            <div className="text-blue-400 mt-1">{metadataUri}</div>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex items-center gap-2 mt-2"
+              onClick={() =>
+                navigator.clipboard.writeText(metadataUri!)
+              }
+            >
+              <ClipboardCopy className="h-4 w-4" />
+              Copy
+            </Button>
+          </div>
 
           <Button
-            className="w-full bg-orange-600 hover:bg-orange-700"
-            onClick={handleStartOver}
+            className="w-full bg-orange-600 hover:bg-orange-700 flex items-center gap-2"
+            onClick={() =>
+              location.assign(`/verify?hash=${fileHash}`)
+            }
           >
-            Forge Another Asset
+            <Search className="h-4 w-4" />
+            Verify this proof
           </Button>
         </CardContent>
       </Card>
-
     </div>
   );
 }

@@ -12,7 +12,7 @@ import {
   CardContent,
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
-import { XCircle } from "lucide-react";
+import { XCircle, RefreshCw } from "lucide-react";
 
 export default function FailurePage() {
   const router = useRouter();
@@ -32,10 +32,10 @@ export default function FailurePage() {
 
   return (
     <main className="min-h-screen text-white relative z-10 flex items-center justify-center px-4">
-      <Card className="max-w-md w-full bg-neutral-900/80 border-neutral-800">
+      <Card className="max-w-md w-full bg-neutral-900/80 border-neutral-800 backdrop-blur">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-400">
-            <XCircle className="h-5 w-5 text-red-400" />
+            <XCircle className="h-5 w-5" />
             Forging Failed
           </CardTitle>
           <CardDescription className="text-neutral-400">
@@ -45,10 +45,11 @@ export default function FailurePage() {
 
         <CardContent className="space-y-4">
           <Button
-            className="w-full"
-            variant="outline"
+            className="w-full flex items-center justify-center gap-2"
+            variant="secondary"
             onClick={handleRetry}
           >
+            <RefreshCw className="h-4 w-4" />
             Try Again
           </Button>
         </CardContent>

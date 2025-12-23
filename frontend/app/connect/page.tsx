@@ -14,7 +14,7 @@ import {
   CardContent,
 } from "../../components/ui/card";
 
-import { Wallet, Smartphone } from "lucide-react";
+import { Wallet, Smartphone, ArrowLeft } from "lucide-react";
 
 export default function ConnectPage() {
   const { isConnected, address } = useAccount();
@@ -49,24 +49,28 @@ export default function ConnectPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 relative z-10">
-      <Card className="max-w-md w-full bg-neutral-900/80 border-neutral-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-neutral-400" />
-            <span className="text-blue-400">Connect Wallet</span>
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <p className="text-sm text-neutral-400">
-            Connect an Ethereum wallet to begin forging a cryptographic proof of
-            existence.
-          </p>
-
+      <div className="flex w-full max-w-4xl">
+        <div className="w-1/2 pr-4">
+          <Card className="h-full bg-neutral-900/80 border-neutral-800 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-blue-400 flex items-center gap-2">
+                <Wallet className="h-5 w-5" />
+                Connect Wallet
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-neutral-400">
+                Connect an Ethereum wallet to begin forging a cryptographic proof of
+                existence.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="w-1/2 pl-4 space-y-4">
           {/* Injected wallet */}
           {hasInjectedWallet ? (
             <Button
-              className="w-full flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+              className="w-full flex items-center gap-2 bg-orange-600 hover:bg-orange-700"
               onClick={() => connect({ connector: injected() })}
               disabled={isPending}
             >
@@ -75,8 +79,8 @@ export default function ConnectPage() {
             </Button>
           ) : (
             <Button
-              variant="outline"
-              className="w-full border-neutral-700"
+              variant="secondary"
+              className="w-full"
               onClick={() =>
                 window.open("https://metamask.io/download/", "_blank")
               }
@@ -109,11 +113,16 @@ export default function ConnectPage() {
             </p>
           )}
 
-          <p className="text-xs text-neutral-500 text-center pt-2">
-            Works on desktop, mobile, and tablets
-          </p>
-        </CardContent>
-      </Card>
+          <Button
+            variant="secondary"
+            className="w-full mt-4"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+      </div>
     </main>
   );
 }

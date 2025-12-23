@@ -9,13 +9,13 @@ export function useChainForgeContract() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
 
-  if (!publicClient || !walletClient || !address) return null;
+  if (!publicClient) return null;
 
   return {
     address: CONTRACT_ADDRESS,
     abi: ChainForgeNFTAbi,
     publicClient,
-    walletClient,
-    account: address,
+    walletClient: walletClient ?? null,
+    account: address ?? null,
   };
 }

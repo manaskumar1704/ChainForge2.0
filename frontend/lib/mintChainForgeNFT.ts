@@ -30,8 +30,8 @@ export async function mintChainForgeNFT({
   const hash = await walletClient.writeContract({
     address,
     abi,
-    functionName: "mintAsset",
-    args: [metadataUri, fileHash],
+    functionName: "mintProof",
+    args: [fileHash, metadataUri],
     chain: sepolia,
     account, // ✅ REQUIRED
   });

@@ -8,7 +8,11 @@ import {
   HelpCircle,
   Clock,
   Workflow,
+  Search,
 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Footer } from "../components/Footer";
+
 
 export default function LandingPage() {
   return (
@@ -26,7 +30,8 @@ export default function LandingPage() {
             client-side hashing and immutable Ethereum-backed verification.
           </p>
 
-          <div className="flex justify-center">
+          {/* Primary CTAs */}
+          <div className="flex flex-col sm:flex-row justify-center gap-6 mt-8 flex-wrap">
             <Button
               asChild
               size="lg"
@@ -35,6 +40,17 @@ export default function LandingPage() {
               <Link href="/connect">
                 <Hammer className="h-5 w-5" />
                 Get Started
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              size="lg"
+              className="px-8 py-6 text-lg flex items-center gap-3 bg-orange-600 hover:bg-orange-700"
+            >
+              <Link href="/verify">
+                <Search className="h-5 w-5" />
+                Verify Proof
               </Link>
             </Button>
           </div>
@@ -70,9 +86,8 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* Why / When / How cards */}
+        {/* Why / When / How */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          {/* WHY */}
           <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 backdrop-blur p-6 space-y-3">
             <div className="flex items-center gap-2 text-neutral-300">
               <HelpCircle className="h-5 w-5 text-blue-400" />
@@ -85,7 +100,6 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* WHEN */}
           <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 backdrop-blur p-6 space-y-3">
             <div className="flex items-center gap-2 text-neutral-300">
               <Clock className="h-5 w-5 text-blue-400" />
@@ -99,7 +113,6 @@ export default function LandingPage() {
             </ul>
           </div>
 
-          {/* HOW */}
           <div className="rounded-xl border border-neutral-800 bg-neutral-900/60 backdrop-blur p-6 space-y-3">
             <div className="flex items-center gap-2 text-neutral-300">
               <Workflow className="h-5 w-5 text-blue-400" />
@@ -113,10 +126,30 @@ export default function LandingPage() {
           </div>
         </div>
 
+        <Card className="bg-neutral-900/80 border-neutral-800">
+          <CardHeader>
+            <CardTitle className="text-blue-400">
+              How to use ChainForge
+            </CardTitle>
+            <CardDescription className="text-neutral-400">
+              Choose what you want to do.
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-2 text-sm text-neutral-400">
+            <p>• <span className="text-neutral-300">Verify</span> — Check if a file already has an on-chain proof (no wallet required)</p>
+            <p>• <span className="text-neutral-300">Get Started</span> — Create a new cryptographic proof and mint it on Ethereum</p>
+          </CardContent>
+        </Card>
+
+
         {/* Bottom reassurance */}
         <p className="text-xs text-neutral-500">
           Your files never leave your device. Only cryptographic proof is stored on-chain.
         </p>
+
+        <Footer />
+
       </div>
     </main>
   );
