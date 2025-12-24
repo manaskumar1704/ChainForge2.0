@@ -1,10 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { StaggeredTransition } from "./StaggeredTransition";
 
-const variants = {
+const variants: Variants = {
   initial: {
     opacity: 0,
     y: 20,

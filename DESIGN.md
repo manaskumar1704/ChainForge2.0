@@ -293,6 +293,8 @@ Motion must feel **mechanical**, not emotional.
     
 *   No surprise UI changes
     
+*   Provide clear, non-intrusive feedback for user actions (e.g., confirming a copy action).
+    
 
 ChainForge favors **clarity over cleverness**.
 
